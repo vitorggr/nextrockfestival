@@ -19,7 +19,7 @@ export async function fetchEstados() {
   return response.json();
 }
 
-// Componente que busca os dados os passa como props
+// Componente que busca os dados e os passa como props
 // para o client component de inscrição
 async function InscricaoClientSide() {
   const estados = await fetchEstados();

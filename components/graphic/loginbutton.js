@@ -19,6 +19,7 @@ export default function LoginButton() {
     router.push("/login");
   };
 
+  //Componente dinâmico para validar sessão do usuário e apresantar login ou logout
   return (
     <div>
       {user ? (

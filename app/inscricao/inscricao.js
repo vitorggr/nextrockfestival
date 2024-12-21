@@ -14,7 +14,7 @@ import {
   Radio,
   Snackbar
 } from "@mui/material";
-import { useAuth } from "../../components/auth/auth";  // Verifique se a lógica de autenticação está correta
+import { useAuth } from "../../components/auth/auth"; 
 import DadosGerais from "../../components/form/dadosgerais";
 import Membros from "../../components/form/membros";
 import MembrosGrid from "../../components/form/membrosgrid";
@@ -52,7 +52,7 @@ export default function Inscricao({ estados }) {
   useEffect(() => {
     // Verifica se o usuário está logado
     if (!user) {
-      // Se o usuário não estiver logado, redireciona para a página de login
+      // Se o usuário não estiver logado, redireciona para a página de login para proteger a rota
       router.push("/login");
     }
   }, [user, router]);

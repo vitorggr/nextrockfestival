@@ -11,18 +11,20 @@ const lstBandId = [
   112012, 111233, 111283,
 ];
 
-// Função para buscar os dados das bandas com revalidação de cache
+// Função para buscar os dados das bandas 
+// com revalidação de cache para reduzir chamadas desnecessárias à API
 export async function fetchArtists() {
   try {
     // Envia várias requisições simultâneas para buscar os dados de cada banda
     const requests = lstBandId.map((id) =>
       fetch(`https://www.theaudiodb.com/api/v1/json/2/artist.php?i=${id}`, {
-        next: { revalidate: 172800 }, // Revalida os dados a cada 2 dias (172800 segundos)
+        next: { revalidate: 172800 },
       })
     );
     const responses = await Promise.all(requests);
 
-    // Dicionário para vincular o ID ao slug (usado em URLs amigáveis)
+    // Dicionário para vincular o ID ao slug 
+    // para criar URLs amigaveis a fim de melhorar a performance do SEO
     const slugDictionary = {};
     const artists = [];
 
@@ -56,7 +58,7 @@ export async function fetchArtists() {
 export default function Page() {
   return (
     <>
-      {/* Utilização de Streaming SSR com fallback para carregamento progressivo */}
+      {/* Streaming SSR com fallback para carregamento progressivo do componente */}
       <Suspense fallback={
         <Box
           display="flex"

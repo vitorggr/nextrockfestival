@@ -9,53 +9,53 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
 export default function InscricaoGrid({ reload, onEdit }) {
-  const [Inscricao, setInscricao] = useState([]);
+  const [inscricoes, setInscricoes] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [openDialog, setOpenDialog] = useState(false);  // Estado para controlar a exibição do modal
-  const [selectedId, setSelectedId] = useState(null); // Estado para armazenar o ID selecionado para exclusão
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
   const { user } = useAuth();
 
   // Função para buscar as inscrições de forma assíncrona
-  const fetchInscricao = async () => {
+  const fetchInscricoes = async () => {
     try {
       const data = await getList(user.uid);
-      setInscricao(data);
+      setInscricoes(data);
     } catch (error) {
       setSnackbarMessage("Erro ao carregar a lista.");
       setOpenSnackbar(true);
     }
   };
 
+  useEffect(() => {
+    fetchInscricoes();
+  }, [reload]);
+
   const handleEdit = (inscricao) => {
     onEdit(inscricao);
   };
 
-  useEffect(() => {
-    fetchInscricao();
-  }, [reload]);
-
   const handleDelete = async (id) => {
     const success = await deleteInscricao(id);
     if (success) {
-      setInscricao((prev) => prev.filter((inscricao) => inscricao.id !== id));
+      setInscricoes((prev) => prev.filter((inscricao) => inscricao.id !== id));
       setSnackbarMessage("Inscrição excluída com sucesso.");
       reload = false;
     } else {
       setSnackbarMessage("Erro ao excluir a inscrição. Tente novamente.");
     }
     setOpenSnackbar(true);
-    setOpenDialog(false); // Fechar o modal após a exclusão
+    setOpenDialog(false);
   };
 
   const handleOpenDialog = (id) => {
-    setSelectedId(id); // Armazenar o ID da inscrição a ser excluída
-    setOpenDialog(true); // Abrir o modal de confirmação
+    setSelectedId(id); 
+    setOpenDialog(true); 
   };
 
   const handleCloseDialog = () => {
-    setOpenDialog(false); // Fechar o modal sem excluir
-    setSelectedId(null); // Limpar o ID selecionado
+    setOpenDialog(false); 
+    setSelectedId(null); 
   };
 
   const columns = [
@@ -79,21 +79,26 @@ export default function InscricaoGrid({ reload, onEdit }) {
     },
   ];
 
-  const rows = Inscricao.map((inscricao) => ({
+  const rows = inscricoes.map((inscricao) => ({
     id: inscricao.id,
     nome: inscricao.nome,
-    origem: inscricao.cidade + " - " + inscricao.estado,
+    origem: `${inscricao.cidade} - ${inscricao.estado}`,
     countMembros: inscricao.integrantes.length,
     integrantes: inscricao.integrantes,
     estado: inscricao.estado,
     cidade: inscricao.cidade,
     longevidade: inscricao.longevidade,
-    release: inscricao.release
+    release: inscricao.release,
   }));
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
   };
+
+  // Validação para não renderizar o componente se não houver inscrições
+  if (inscricoes.length === 0) {
+    return null;
+  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -111,13 +116,8 @@ export default function InscricaoGrid({ reload, onEdit }) {
             disableSelectionOnClick
             checkboxSelection={false}
             selectionModel={[]}
-            hideFooterPagination={true}
-            hideFooterSelectedRowCount={true} 
-            componentsProps={{
-              footer: {
-                showSelectedRowCount: false, 
-              }
-            }}
+            hideFooterPagination
+            hideFooterSelectedRowCount
           />
         </Suspense>
       </Box>
