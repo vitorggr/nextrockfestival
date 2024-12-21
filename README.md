@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+https://nextrockfestival.vercel.app/
 
-## Getting Started
+## 🔨 Objetivos
 
-First, run the development server:
+- Aplicar conceitos de arquitetura de front-end com **Next.js**.
+- Utilizar **Server Components** para realizar renderização no servidor, otimizando a performance e reduzindo o carregamento inicial no cliente.
+- Utilizar **Client Components** para interatividade e manipulação de estado no lado do cliente.
+- Criar rotas dinâmicas e responsivas utilizando a estrutura de pastas da **App Directory** e o **App Router** do Next.js, aproveitando arquivos `page.js` para definir páginas de forma declarativa.
+- Estilizar de maneira **responsiva** para garantir usabilidade em diferentes dispositivos.
+- Configurar uma pipeline **CI/CD** para automatizar o processo de build e deploy da aplicação.
+- Implementar otimizações de imagens utilizando o componente **Image** do Next.js.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Guia Rápido
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Siga os passos abaixo para executar o projeto localmente:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Clone o repositório:**
 
-## Learn More
+   ```shell
+   git clone https://github.com/seuusuario/nextrockfestival.git
 
-To learn more about Next.js, take a look at the following resources:
+2. **Instale as dependências:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```shell
+   npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Inicie o servidor de desenvolvimento:**
+   
+   ```shell
+    npm run dev
 
-## Deploy on Vercel
+4. **Acesse o aplicativo no navegador:**
+    
+O aplicativo estará rodando localmente em http://localhost:3000.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+   
