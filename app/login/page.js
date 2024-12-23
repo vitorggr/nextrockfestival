@@ -34,7 +34,12 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+
+      //Guarda o token do usuário em cookie para validação de permissão
+      const token = await credential.user.getIdToken();
+      setCookie(null, "token", token, { path: "/" });
+
       setSuccess("Login bem-sucedido!");
       router.push("/");
     } catch (err) {

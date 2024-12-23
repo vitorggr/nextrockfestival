@@ -53,6 +53,7 @@ export default function Inscricao({ estados }) {
     // Verifica se o usuário está logado
     if (!user) {
       // Se o usuário não estiver logado, redireciona para a página de login para proteger a rota
+      // Uma camada adicional tambem é implementada via cookie em middleware.js
       router.push("/login");
     }
   }, [user, router]);
