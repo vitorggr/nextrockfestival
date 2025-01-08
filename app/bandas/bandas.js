@@ -11,10 +11,24 @@ const Bandas = ({ artists, slugDictionary }) => {
   const router = useRouter();
   const ITEMS_PER_PAGE = 9;
 
+  //Função utilizada para ajustar o comportamento em produção 
+  //uma vez que a renderização do lado do servidor pode ocorrer antes do objeto sessionStorage estar disponível 
+  const handleSessionStorage = {
+    getItem: (key) => {
+      if (typeof window === 'undefined') return null;
+      return sessionStorage.getItem(key);
+    },
+    setItem: (key, value) => {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(key, value);
+      }
+    },
+  };
+
   // Guardando o dicionário no sessionStorage somente quando necessário
   useEffect(() => {
-    if (slugDictionary && !sessionStorage.getItem('slugDictionary')) {
-      sessionStorage.setItem("slugDictionary", JSON.stringify(slugDictionary));
+    if (slugDictionary && !handleSessionStorage.getItem('slugDictionary')) {
+      handleSessionStorage.setItem('slugDictionary', JSON.stringify(slugDictionary));
     }
   }, [slugDictionary]);
 
