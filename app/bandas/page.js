@@ -18,7 +18,7 @@ export async function fetchArtists() {
     // Envia várias requisições simultâneas para buscar os dados de cada banda
     const requests = lstBandId.map((id) =>
       fetch(`https://www.theaudiodb.com/api/v1/json/2/artist.php?i=${id}`, {
-        next: { revalidate: 172800 },
+        next: { revalidate: 259200 },
       })
     );
     const responses = await Promise.all(requests);

@@ -27,8 +27,8 @@ const Bandas = ({ artists, slugDictionary }) => {
 
   // Guardando o dicionário no sessionStorage somente quando necessário
   useEffect(() => {
-    if (slugDictionary && !handleSessionStorage.getItem('slugDictionary')) {
-      handleSessionStorage.setItem('slugDictionary', JSON.stringify(slugDictionary));
+    if (slugDictionary && !window.sessionStorage.getItem('slugDictionary')) {
+      window.sessionStorage.setItem('slugDictionary', JSON.stringify(slugDictionary));
     }
   }, [slugDictionary]);
 

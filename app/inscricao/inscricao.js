@@ -14,23 +14,27 @@ import {
   Radio,
   Snackbar
 } from "@mui/material";
-import { useAuth } from "../../components/auth/auth"; 
+import { useAuth } from "../../components/auth/auth";
 import DadosGerais from "../../components/form/dadosgerais";
 import Membros from "../../components/form/membros";
 import MembrosGrid from "../../components/form/membrosgrid";
 import InscricaoGrid from "../../components/form/inscricaogrid";
 import Footer from "../../components/graphic/footer";
 import axios from "axios";
-import { post, put } from '../../components/requests/firestore';
 
 export default function Inscricao({ estados }) {
+  const API = process.env.NEXT_PUBLIC_API_URL;
   const { user } = useAuth();
   const router = useRouter();
-  const { control, handleSubmit, register, reset, watch, formState: { errors } } = useForm({
-    defaultValues: {
-      longevidade: ''
-    }
-  });
+  const {
+    control,
+    handleSubmit,
+    register,
+    reset,
+    watch,
+    formState: { errors }
+  } = useForm({ defaultValues: { longevidade: "" } });
+
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [open, setOpen] = useState(false);
@@ -39,74 +43,65 @@ export default function Inscricao({ estados }) {
     nome: "",
     email: "",
     lider: false,
-    instrumentos: [],
+    instrumentos: []
   });
   const [integrantes, setIntegrantes] = useState([]);
-  const [isReload, setReload] = useState(false);
+  const [inscricoes, setInscricoes] = useState([]);
+  const [reload, setReload] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [cidades, setCidades] = useState([]);
   const [membrosError, setMembrosError] = useState("");
   const [liderError, setLiderError] = useState("");
   const [selectedEstado, setSelectedEstado] = useState("");
 
+  // Redireciona se não logado
   useEffect(() => {
-    // Verifica se o usuário está logado
-    if (!user) {
-      // Se o usuário não estiver logado, redireciona para a página de login para proteger a rota
-      // Uma camada adicional tambem é implementada via cookie em middleware.js
-      router.push("/login");
-    }
+    if (!user) router.push("/login");
   }, [user, router]);
 
+  // Atualiza estado selecionado
   useEffect(() => {
     setSelectedEstado(watch("estado"));
   }, [watch("estado")]);
 
+  // Busca cidades no IBGE
   useEffect(() => {
-    const fetchCidades = async () => {
-      if (selectedEstado) {
-        try {
-          const response = await axios.get(
-            `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedEstado}/municipios`
-          );
-          setCidades(response.data);
-        } catch (error) {
-          console.error("Erro ao carregar cidades:", error);
-        }
-      }
-    };
-    fetchCidades();
+    if (!selectedEstado) return;
+    axios
+      .get(
+        `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedEstado}/municipios`
+      )
+      .then(resp => setCidades(resp.data))
+      .catch(console.error);
   }, [selectedEstado]);
 
-  const handleIntegranteChange = (event) => {
-    const { name, value, checked } = event.target;
-
-    if (name === "instrumentos") {
-      let updatedInstrumentos = [...integrante.instrumentos];
-
-      if (checked) {
-        updatedInstrumentos.push(value);
-      } else {
-        updatedInstrumentos = updatedInstrumentos.filter(instr => instr !== value);
+  // Carrega inscrições do usuário
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const resp = await axios.get(`${API}/api/inscricao`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setInscricoes(resp.data);
+      } catch (err) {
+        console.error("Erro ao listar inscrições:", err);
       }
+    })();
+  }, [user, reload, API]);
 
-      setIntegrante(prev => ({
-        ...prev,
-        instrumentos: updatedInstrumentos,
-      }));
+  // Handlers de integrantes
+  const handleIntegranteChange = (e) => {
+    const { name, value, checked } = e.target;
+    if (name === "instrumentos") {
+      let arr = [...integrante.instrumentos];
+      if (checked) arr.push(value);
+      else arr = arr.filter(i => i !== value);
+      setIntegrante(prev => ({ ...prev, instrumentos: arr }));
     } else {
-      setIntegrante(prev => ({
-        ...prev,
-        [name]: value,
-      }));
+      setIntegrante(prev => ({ ...prev, [name]: value }));
     }
-  };
-
-  const handleEditInscricao = (data) => {
-    reset(data);
-    setIntegrantes(data.integrantes);
-    setIsEditing(true);
-    setEditId(data.id);
   };
 
   const handleAddIntegrante = () => {
@@ -114,88 +109,143 @@ export default function Inscricao({ estados }) {
       setMembrosError("Nome e email do integrante são obrigatórios");
       return;
     }
-
     if (!integrante.instrumentos.length) {
       setMembrosError("Instrumentos do integrante são obrigatórios");
       return;
     }
-
     const hasLider = integrantes.some(i => i.lider);
-
     if (integrante.lider && hasLider && editIndex === null) {
       setLiderError("Já existe um líder na banda");
       return;
     }
-
     setMembrosError("");
     setLiderError("");
 
     if (editIndex !== null) {
-      const updatedIntegrantes = [...integrantes];
-      updatedIntegrantes[editIndex] = integrante;
-      setIntegrantes(updatedIntegrantes);
+      const up = [...integrantes];
+      up[editIndex] = integrante;
+      setIntegrantes(up);
       setEditIndex(null);
     } else {
       setIntegrantes(prev => [...prev, integrante]);
     }
-
     setIntegrante({ nome: "", email: "", lider: false, instrumentos: [] });
   };
 
-  const handleEditIntegrante = (index) => {
-    setIntegrante(integrantes[index]);
-    setEditIndex(index);
+  // Edit e delete de integrante
+  const handleEditIntegrante = (i) => {
+    setIntegrante(integrantes[i]);
+    setEditIndex(i);
+  };
+  const handleDeleteIntegrante = (i) =>
+    setIntegrantes(integrantes.filter((_, idx) => idx !== idx));
+
+  // Edit inscrição
+  const handleEditInscricao = (data) => {
+    reset(data);
+    setIntegrantes(data.integrantes);
+    setIsEditing(true);
+    setEditId(data.id);
   };
 
-  const handleDeleteIntegrante = (index) => {
-    const updatedIntegrantes = integrantes.filter((_, i) => i !== index);
-    setIntegrantes(updatedIntegrantes);
+
+  // Delete inscrição
+  const handleDeleteInscricao = async (id) => {
+    try {
+      const token = await user.getIdToken();
+      await axios.delete(`${API}/api/inscricao/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setReload(r => !r);
+    } catch (err) {
+      console.error("Erro ao deletar:", err);
+    }
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const handleStatus = async (id, novoStatus) => {    try {
+      const token = await user.getIdToken();
+
+      // 1. Corrigindo o endpoint para incluir /status
+      const response = await axios.patch(
+        `${API}/api/inscricao/${id}/status`, // Note o /status no final
+        { ativo: novoStatus },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // 2. Feedback visual
+      setMessage(`Status alterado para ${novoStatus ? "ativo" : "inativo"}`);
+      setOpen(true);
+
+      setInscricoes(prev => prev.map(insc =>
+        insc.id === id ? { ...insc, ativo: novoStatus } : insc
+      ));
+
+    } catch (err) {
+      console.error('Erro detalhado:', {
+        error: err,
+        response: err.response?.data
+      });
+
+      setMessage(`Erro: ${err.response?.data?.error || err.message}`);
+      setOpen(true);
+
+      // 5. Rollback visual (opcional)
+      setReload(prev => !prev);
+    }
   };
 
+  // Submit formulário
   const onSubmit = async (data) => {
-    if (integrantes.length === 0) {
-      setMembrosError("É necessário adicionar pelo menos um integrante.");
+    if (!integrantes.length) {
+      setMembrosError("Adicione pelo menos um integrante.");
       return;
     }
-
-    if (!integrantes.some(integrante => integrante.lider)) {
-      setMembrosError("É necessário definir pelo menos um líder na banda.");
+    if (!integrantes.some(i => i.lider)) {
+      setMembrosError("Defina um líder na banda.");
       return;
     }
 
     try {
-      debugger;
+      const token = await user.getIdToken();
       data.integrantes = integrantes;
-      data.uidUsuario = user.uid;
-      
+
       if (isEditing) {
-        await put(editId, data);
+        await axios.put(`${API}/api/inscricao/ ${editId}`, data, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setMessage("Inscrição alterada com sucesso!");
       } else {
-        await post(data);
+        await axios.post(`${API}/api/inscricao`, data, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setMessage("Inscrição enviada com sucesso!");
       }
 
-      setOpen(true);
+      // 1. limpa form e estado de integrantes
       reset();
       setIntegrantes([]);
       setIsEditing(false);
-      setReload((prev) => !prev);
-    } catch (error) {
-      setMessage("Erro: " + error);
+      setEditId(null);
+
+      // 2. aciona recarga da grid
+      setOpen(true);
+      setReload(prev => !prev);
+
+    } catch (err) {
+      console.error(err);
+      setMessage("Erro: " + (err.response?.data?.error || err.message));
       setOpen(true);
     }
   };
 
-  // Validação para não renderizar formulário 
-  // para usuário não autenticado
-  if (!user) {
-    return null;
-  }
+  const handleClose = () => setOpen(false);
+
+  if (!user) return null;
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
@@ -207,12 +257,9 @@ export default function Inscricao({ estados }) {
           autoHideDuration={3000}
           onClose={handleClose}
           message={message}
-          action={
-            <Button color="inherit" onClick={handleClose}>
-              Fechar
-            </Button>
-          }
+          action={<Button color="inherit" onClick={handleClose}>Fechar</Button>}
         />
+
         <Typography variant="h6">Informações Gerais</Typography>
         <DadosGerais
           control={control}
@@ -223,6 +270,7 @@ export default function Inscricao({ estados }) {
           selectedEstado={selectedEstado}
           register={register}
         />
+
         <FormControl component="fieldset" margin="normal">
           <Typography>Quanto tempo de existência da banda?</Typography>
           <Controller
@@ -238,14 +286,22 @@ export default function Inscricao({ estados }) {
                   'Menos de 5 anos',
                   'Menos de 10 anos',
                   'Mais de 10 anos'
-                ].map((option) => (
-                  <FormControlLabel key={option} value={option} control={<Radio />} label={option} />
+                ].map(opt => (
+                  <FormControlLabel
+                    key={opt}
+                    value={opt}
+                    control={<Radio />}
+                    label={opt}
+                  />
                 ))}
               </RadioGroup>
             )}
           />
-          {errors.longevidade && <p style={{ color: 'red' }}>{errors.longevidade.message}</p>}
+          {errors.longevidade && (
+            <p style={{ color: 'red' }}>{errors.longevidade.message}</p>
+          )}
         </FormControl>
+
         <Typography variant="h6">Integrantes</Typography>
         <Membros
           integrante={integrante}
@@ -262,16 +318,29 @@ export default function Inscricao({ estados }) {
             handleDeleteIntegrante={handleDeleteIntegrante}
           />
         )}
-        <Box sx={{ mt: 4, justify: 'center', marginBottom: 10 }}>
-          <Button type="submit" variant="contained" color="primary" sx={{ width: '100%' }}>
+
+        <Box sx={{ mt: 4, mb: 10 }}>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ width: '100%' }}
+          >
             {isEditing ? "Alterar Inscrição" : "Enviar Inscrição"}
           </Button>
         </Box>
       </form>
-      <Box sx={{ mt: 4, justify: 'center', marginBottom: 10 }}>
-        <InscricaoGrid sx={{ mt: 4, justify: 'center', marginBottom: 10 }} reload={isReload} onEdit={handleEditInscricao} />
+
+      <Box sx={{ mt: 4, mb: 10 }}>
+        <InscricaoGrid
+          inscricoes={inscricoes}
+          onEdit={handleEditInscricao}
+          onDelete={handleDeleteInscricao}
+          onChangeStatus={handleStatus}
+        />
       </Box>
+
       <Footer />
-    </Container >
+    </Container>
   );
 }

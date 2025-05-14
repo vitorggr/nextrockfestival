@@ -10,8 +10,6 @@ import {
   Typography,
   Snackbar,
 } from "@mui/material";
-import { db } from "../../components/auth/firebase"; 
-import { collection, addDoc } from "firebase/firestore";
 
 export default function Contato() {
   const { control, handleSubmit, reset, formState: { errors } } = useForm();
@@ -20,14 +18,25 @@ export default function Contato() {
 
   const onSubmit = async (data) => {
     try {
-      await addDoc(collection(db, "contatos"), data);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contato`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao enviar formulário');
+      }
+
       setMessage("Formulário enviado com sucesso!");
       setOpen(true);
       reset();
     } catch (error) {
       setMessage("Erro ao enviar o formulário. Tente novamente.");
       setOpen(true);
-      console.error("Erro ao adicionar documento: ", error);
+      console.error("Erro:", error);
     }
   };
 
