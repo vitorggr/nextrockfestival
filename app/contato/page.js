@@ -14,27 +14,42 @@ import {
 export default function Contato() {
   const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
-
-  const onSubmit = async (data) => {
+  const [message, setMessage] = useState("");  const onSubmit = async (data) => {
     try {
+      // Garante que todos os campos obrigatórios estão presentes
+      const { titulo, nome, email, descricao } = data;
+      if (!titulo || !nome || !email || !descricao) {
+        setMessage("Por favor, preencha todos os campos obrigatórios.");
+        setOpen(true);
+        return;
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contato`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          titulo,
+          nome,
+          email,
+          descricao
+        })
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erro ao enviar formulário');
+        throw new Error(responseData.error || 'Erro ao enviar formulário');
       }
 
-      setMessage("Formulário enviado com sucesso!");
-      setOpen(true);
-      reset();
+      if (responseData.success) {
+        setMessage("Formulário enviado com sucesso!");
+        setOpen(true);
+        reset();
+      }
     } catch (error) {
-      setMessage("Erro ao enviar o formulário. Tente novamente.");
+      setMessage(error.message || "Erro ao enviar o formulário. Tente novamente.");
       setOpen(true);
       console.error("Erro:", error);
     }

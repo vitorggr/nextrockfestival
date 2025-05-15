@@ -86,7 +86,7 @@ export default function Inscricao({ estados }) {
         });
         setInscricoes(resp.data);
       } catch (err) {
-        console.error("Erro ao listar inscrições:", err);
+        setMessage("Erro ao listar inscrições");
       }
     })();
   }, [user, reload, API]);
@@ -148,7 +148,6 @@ export default function Inscricao({ estados }) {
     setEditId(data.id);
   };
 
-
   // Delete inscrição
   const handleDeleteInscricao = async (id) => {
     try {
@@ -156,18 +155,26 @@ export default function Inscricao({ estados }) {
       await axios.delete(`${API}/api/inscricao/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setReload(r => !r);
-    } catch (err) {
-      console.error("Erro ao deletar:", err);
+      
+      // Verifica se o item excluído é o mesmo que está sendo editado
+      if (id === editId) {
+        reset();
+        setIntegrantes([]);
+        setIsEditing(false);
+        setEditId(null);
+        setMessage("Registro em edição foi excluído");
+        setOpen(true);
+      }
+      
+      setReload(r => !r);    } catch (err) {
+      setMessage("Erro ao deletar registro");
+      setOpen(true);
     }
   };
 
   const handleStatus = async (id, novoStatus) => {    try {
-      const token = await user.getIdToken();
-
-      // 1. Corrigindo o endpoint para incluir /status
-      const response = await axios.patch(
-        `${API}/api/inscricao/${id}/status`, // Note o /status no final
+      const token = await user.getIdToken();      const response = await axios.patch(
+        `${API}/api/inscricao/${id}/status`,
         { ativo: novoStatus },
         {
           headers: {
@@ -175,10 +182,7 @@ export default function Inscricao({ estados }) {
             'Content-Type': 'application/json'
           }
         }
-      );
-
-      // 2. Feedback visual
-      setMessage(`Status alterado para ${novoStatus ? "ativo" : "inativo"}`);
+      );      setMessage(`Status alterado para ${novoStatus ? "ativo" : "inativo"}`);
       setOpen(true);
 
       setInscricoes(prev => prev.map(insc =>
@@ -186,10 +190,6 @@ export default function Inscricao({ estados }) {
       ));
 
     } catch (err) {
-      console.error('Erro detalhado:', {
-        error: err,
-        response: err.response?.data
-      });
 
       setMessage(`Erro: ${err.response?.data?.error || err.message}`);
       setOpen(true);
@@ -208,22 +208,48 @@ export default function Inscricao({ estados }) {
     if (!integrantes.some(i => i.lider)) {
       setMembrosError("Defina um líder na banda.");
       return;
-    }
+    }    try {
+      // Verifica se o usuário está autenticado
+      if (!user) {
+        setMessage("Usuário não autenticado. Por favor, faça login novamente.");
+        setOpen(true);
+        router.push("/login");
+        return;
+      }
 
-    try {
       const token = await user.getIdToken();
-      data.integrantes = integrantes;
+      if (!token) {
+        throw new Error("Token de autenticação não encontrado");
+      }
 
+      data.integrantes = integrantes;
+      
       if (isEditing) {
-        await axios.put(`${API}/api/inscricao/ ${editId}`, data, {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await axios.put(`${API}/api/inscricao/${editId}`, data, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
-        setMessage("Inscrição alterada com sucesso!");
-      } else {
-        await axios.post(`${API}/api/inscricao`, data, {
-          headers: { Authorization: `Bearer ${token}` }
+        
+        if (response.data) {
+          setMessage("Inscrição alterada com sucesso!");
+        }      } else {
+        // Verifica se temos o token antes de fazer a requisição
+        if (!token) {
+          throw new Error('Usuário não autenticado');
+        }
+
+        const response = await axios.post(`${API}/api/inscricao`, data, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
-        setMessage("Inscrição enviada com sucesso!");
+        
+        if (response.data) {
+          setMessage("Inscrição enviada com sucesso!");
+        }
       }
 
       // 1. limpa form e estado de integrantes
@@ -236,9 +262,7 @@ export default function Inscricao({ estados }) {
       setOpen(true);
       setReload(prev => !prev);
 
-    } catch (err) {
-      console.error(err);
-      setMessage("Erro: " + (err.response?.data?.error || err.message));
+    } catch (err) {      setMessage("Erro: " + (err.response?.data?.error || err.message));
       setOpen(true);
     }
   };
