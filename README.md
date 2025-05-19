@@ -19,7 +19,7 @@ Siga os passos abaixo para executar o projeto localmente:
 1. **Clone o repositório:**
 
    ```shell
-   git clone https://github.com/seuusuario/nextrockfestival.git
+   git clone https://github.com/vitorggr/nextrockfestival.git
 
 2. **Instale as dependências:**
 
